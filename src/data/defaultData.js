@@ -8,13 +8,13 @@ export const initialPortfolioData = {
     skills: "React.js, JavaScript (ES6+), HTML5, CSS3, Tailwind CSS, Firebase, Redux Toolkit, REST APIs, Git/GitHub, Java",
     timeline: [
       {
-        year: "2024 - 2026",
+        year: "2022 - 2026",
         role: "Master of Computer Applications (MCA)",
         institution: "PIRENS IBMA, Savitribai Phule Pune University",
         details: "Specialized in Web Application Architecture, Algorithms, and Software Engineering."
       },
       {
-        year: "2019 - 2024",
+        year: "2019 - 2022",
         role: "Bachelor of Computer Applications (BCA)",
         institution: "Kamla Nehru Mahavidyalaya (RTMNU)",
         details: "Built foundations in Object-Oriented Programming, Database Systems, and UI Engineering."
