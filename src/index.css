@@ -720,3 +720,37 @@ body {
     padding: 1.5rem;
   }
 }
+
+/* Social Icon Buttons under Profile Photo */
+.social-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: var(--radius-full);
+  background: var(--surface-color);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  transition: var(--transition);
+  text-decoration: none;
+}
+
+.social-icon-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px var(--accent-glow);
+}
+
+/* Social Grid Cards */
+.social-card {
+  transition: var(--transition);
+}
+
+.social-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent-color);
+  box-shadow: 0 10px 30px -10px var(--accent-glow);
+}

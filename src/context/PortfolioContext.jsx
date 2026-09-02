@@ -34,10 +34,10 @@ export const PortfolioProvider = ({ children }) => {
   };
 
   const login = (username, password) => {
-    if (username === 'admin' && password === 'password123') {
+    if (username.trim() === 'admin' && password.trim() === 'password123') {
       sessionStorage.setItem('adminAuth', 'true');
       setIsAuthenticated(true);
-      showToast('[AUTH SUCCESSFUL]: Welcome, Admin.');
+      showToast('[AUTH SUCCESSFUL]: Welcome, Rohit.');
       return true;
     }
     showToast('[AUTH FAILED]: Invalid Credentials!');
@@ -51,37 +51,19 @@ export const PortfolioProvider = ({ children }) => {
     showToast('[LOGOUT]: Session terminated.');
   };
 
-  const updateProfile = (status, bio, skills) => {
-    setPortfolioData((prev) => ({
-      ...prev,
-      hero: { ...prev.hero, status },
-      about: { ...prev.about, bio, skills }
-    }));
-    showToast('[UPDATED]: Profile details saved successfully!');
+  // Full-state updater for comprehensive dashboard control
+  const updateEntirePortfolio = (newData) => {
+    setPortfolioData(newData);
+    showToast('[SAVED]: Portfolio settings synchronized!');
   };
 
-  const saveProject = (projectPayload) => {
-    setPortfolioData((prev) => {
-      const existingIndex = prev.projects.findIndex((p) => p.id === projectPayload.id);
-      let updatedProjects = [...prev.projects];
-      
-      if (existingIndex !== -1) {
-        updatedProjects[existingIndex] = projectPayload;
-        showToast('[PROJECT UPDATED]: Saved changes successfully!');
-      } else {
-        updatedProjects.push({ ...projectPayload, id: Date.now() });
-        showToast('[PROJECT ADDED]: Created new project entry!');
-      }
-      return { ...prev, projects: updatedProjects };
-    });
-  };
-
-  const deleteProject = (id) => {
+  // Delete all projects action
+  const clearAllProjects = () => {
     setPortfolioData((prev) => ({
       ...prev,
-      projects: prev.projects.filter((p) => p.id !== id)
+      projects: []
     }));
-    showToast('[DELETED]: Project removed successfully.');
+    showToast('[REMOVED]: All project entries cleared.');
   };
 
   return (
@@ -90,14 +72,14 @@ export const PortfolioProvider = ({ children }) => {
         theme,
         toggleTheme,
         portfolioData,
+        setPortfolioData,
+        updateEntirePortfolio,
+        clearAllProjects,
         isAuthenticated,
         view,
         setView,
         login,
         logout,
-        updateProfile,
-        saveProject,
-        deleteProject,
         toastMessage,
         showToast
       }}
