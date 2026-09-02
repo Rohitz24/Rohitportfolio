@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
 
 export const AdminDashboard = () => {
-  const { portfolioData, updateEntirePortfolio, clearAllProjects } = usePortfolio();
+  const { portfolioData, updateEntirePortfolio, resetToCodeDefault } = usePortfolio();
   const [activeTab, setActiveTab] = useState('profile');
 
   // Hero & Profile State
@@ -11,7 +11,7 @@ export const AdminDashboard = () => {
   const [profileImg, setProfileImg] = useState(portfolioData.hero?.profileImg || '/pic.jpg');
   const [resumeUrl, setResumeUrl] = useState(portfolioData.hero?.resumeUrl || '/Rohit_zade_cv.pdf');
 
-  // Social Links
+  // Social Profiles
   const [socials, setSocials] = useState({
     github: portfolioData.socials?.github || '',
     linkedin: portfolioData.socials?.linkedin || '',
@@ -65,7 +65,13 @@ export const AdminDashboard = () => {
   const [projects, setProjects] = useState(portfolioData.projects || []);
   const [editingProjId, setEditingProjId] = useState(null);
   const [projectInput, setProjectInput] = useState({
-    title: '', exe: '', img: '', desc: '', details: '', github: '', live: ''
+    title: '',
+    exe: '',
+    img: '',
+    desc: '',
+    details: '',
+    github: '',
+    live: ''
   });
 
   // Direct Profile Photo File Picker
@@ -78,7 +84,7 @@ export const AdminDashboard = () => {
     }
   };
 
-  // Direct PDF Document File Picker
+  // Direct PDF Resume File Picker
   const handleResumeUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -92,7 +98,7 @@ export const AdminDashboard = () => {
     }
   };
 
-  // Direct Project Cover Image File Picker
+  // Direct Project Image File Picker
   const handleProjectImgUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -102,7 +108,7 @@ export const AdminDashboard = () => {
     }
   };
 
-  // Timeline Event Handlers
+  // Academic Timeline Handlers
   const handleTimelineChange = (idx, field, value) => {
     const updated = [...timeline];
     updated[idx][field] = value;
@@ -112,7 +118,7 @@ export const AdminDashboard = () => {
   const addTimelineItem = () => {
     setTimeline([
       ...timeline,
-      { year: '2026', role: 'Degree / Program', institution: 'University / Institute', details: 'Core focus and engineering specialization' }
+      { year: '2026', role: 'Degree / Program', institution: 'University / Institute', details: 'Core focus & curriculum' }
     ]);
   };
 
@@ -120,7 +126,7 @@ export const AdminDashboard = () => {
     setTimeline(timeline.filter((_, i) => i !== idx));
   };
 
-  // Skills Group Handlers
+  // Skill Group Handlers
   const handleSkillChange = (gIdx, sIdx, field, val) => {
     const updated = [...skillGroups];
     updated[gIdx].skills[sIdx][field] = val;
@@ -139,7 +145,7 @@ export const AdminDashboard = () => {
     setSkillGroups(updated);
   };
 
-  // Projects Handlers
+  // Project Management Handlers
   const handleSaveProject = (e) => {
     e.preventDefault();
     if (editingProjId) {
@@ -160,26 +166,47 @@ export const AdminDashboard = () => {
     setProjects(projects.filter((p) => p.id !== id));
   };
 
-  // Synchronize Everything with PortfolioContext & LocalStorage
+  const clearAllProjects = () => {
+    if (window.confirm('Are you sure you want to remove ALL project entries?')) {
+      setProjects([]);
+    }
+  };
+
+  // Assemble full payload
+  const getCurrentState = () => ({
+    hero: {
+      status: heroStatus,
+      bioText: heroBio,
+      profileImg,
+      resumeUrl
+    },
+    socials,
+    about: {
+      bio: aboutBio,
+      skills: competencies,
+      timeline
+    },
+    skillGroups,
+    projects
+  });
+
+  // Save to browser context & localStorage
   const handleGlobalSave = () => {
-    const payload = {
-      ...portfolioData,
-      hero: {
-        status: heroStatus,
-        bioText: heroBio,
-        profileImg,
-        resumeUrl
-      },
-      socials,
-      about: {
-        bio: aboutBio,
-        skills: competencies,
-        timeline
-      },
-      skillGroups,
-      projects
-    };
-    updateEntirePortfolio(payload);
+    updateEntirePortfolio(getCurrentState());
+  };
+
+  // Download updated configuration as a defaultData.js file for GitHub/Netlify
+  const handleExportCode = () => {
+    const fullData = getCurrentState();
+    const fileContent = `export const DATA_VERSION = "${Date.now()}";\n\nexport const initialPortfolioData = ${JSON.stringify(fullData, null, 2)};\n`;
+
+    const blob = new Blob([fileContent], { type: 'application/javascript' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'defaultData.js';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -188,14 +215,43 @@ export const AdminDashboard = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 style={{ fontSize: '1.8rem', fontWeight: 800 }}>Admin Workspace</h2>
-          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Configure profile media, dynamic skills, and featured work</p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
+            Manage profile settings, credentials, and featured projects
+          </p>
         </div>
-        <button className="btn-pill btn-primary" onClick={handleGlobalSave} style={{ padding: '0.75rem 1.8rem' }}>
-          ✓ Save All Changes
-        </button>
+
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+          {resetToCodeDefault && (
+            <button
+              className="btn-pill"
+              onClick={resetToCodeDefault}
+              title="Discard browser cache and revert to repository code"
+              style={{ fontSize: '0.85rem' }}
+            >
+              ↺ Reset to Code
+            </button>
+          )}
+
+          <button
+            className="btn-pill"
+            onClick={handleExportCode}
+            title="Download defaultData.js to push changes directly into Git"
+            style={{ fontSize: '0.85rem' }}
+          >
+            ⬇ Export to defaultData.js
+          </button>
+
+          <button
+            className="btn-pill btn-primary"
+            onClick={handleGlobalSave}
+            style={{ padding: '0.75rem 1.8rem', fontSize: '0.85rem' }}
+          >
+            ✓ Save Changes
+          </button>
+        </div>
       </div>
 
-      {/* Segmented Workspace Navigation Tabs */}
+      {/* Spacious Segmented Tabs */}
       <div style={{ display: 'flex', gap: '8px', marginBottom: '2.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.75rem', overflowX: 'auto' }}>
         {[
           { id: 'profile', label: '1. Hero, Resume & Socials' },
@@ -219,7 +275,7 @@ export const AdminDashboard = () => {
         ))}
       </div>
 
-      {/* TAB 1: HERO, RESUME UPLOAD & SOCIAL LINKS */}
+      {/* TAB 1: HERO, RESUME & SOCIALS */}
       {activeTab === 'profile' && (
         <div className="glass-card" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-color)' }}>
@@ -233,13 +289,12 @@ export const AdminDashboard = () => {
                 type="text"
                 value={heroStatus}
                 onChange={(e) => setHeroStatus(e.target.value)}
-                placeholder="STATUS: AVAILABLE FOR WORK"
+                placeholder="STATUS: AVAILABLE FOR OPPORTUNITIES"
               />
             </div>
 
-            {/* Resume with File Upload + Text URL */}
             <div className="form-group">
-              <label>&gt; Resume PDF (Local Path or Direct PDF Upload)</label>
+              <label>&gt; Resume PDF (Path or Upload .pdf)</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <input
                   type="text"
@@ -274,7 +329,7 @@ export const AdminDashboard = () => {
             />
           </div>
 
-          {/* Profile Photo Upload & Preview */}
+          {/* Profile Photo */}
           <div style={{ display: 'grid', gridTemplateColumns: '110px 1fr', gap: '2rem', alignItems: 'center' }}>
             <img
               src={profileImg}
@@ -288,7 +343,7 @@ export const AdminDashboard = () => {
               }}
             />
             <div className="form-group">
-              <label>&gt; Profile Photo (Path, URL or Direct Image Upload)</label>
+              <label>&gt; Profile Photo (Path, URL or Upload image)</label>
               <input
                 type="text"
                 value={profileImg}
@@ -305,7 +360,7 @@ export const AdminDashboard = () => {
             </div>
           </div>
 
-          {/* Social Profiles Bar */}
+          {/* Social Profiles */}
           <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '1.5rem' }}>
             <h4 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text-primary)' }}>
               Social Handles (Shown beneath profile photo)
@@ -344,7 +399,7 @@ export const AdminDashboard = () => {
                   type="text"
                   value={socials.email}
                   onChange={(e) => setSocials({ ...socials, email: e.target.value })}
-                  placeholder="mailto:user@mail.com"
+                  placeholder="mailto:your-email@example.com"
                 />
               </div>
             </div>
@@ -388,7 +443,15 @@ export const AdminDashboard = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {timeline.map((item, idx) => (
-                <div key={idx} style={{ padding: '1.25rem', background: 'rgba(0,0,0,0.15)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+                <div
+                  key={idx}
+                  style={{
+                    padding: '1.25rem',
+                    background: 'rgba(0,0,0,0.15)',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--border-subtle)'
+                  }}
+                >
                   <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr 1fr auto', gap: '1rem', alignItems: 'center', marginBottom: '0.75rem' }}>
                     <input
                       type="text"
@@ -429,7 +492,7 @@ export const AdminDashboard = () => {
         </div>
       )}
 
-      {/* TAB 3: TECHNICAL SKILLS & METERS */}
+      {/* TAB 3: TECHNICAL SKILLS */}
       {activeTab === 'skills' && (
         <div className="glass-card" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-color)' }}>
@@ -438,10 +501,20 @@ export const AdminDashboard = () => {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: '1.5rem' }}>
             {skillGroups.map((group, gIdx) => (
-              <div key={gIdx} style={{ padding: '1.5rem', background: 'rgba(0,0,0,0.15)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-subtle)' }}>
+              <div
+                key={gIdx}
+                style={{
+                  padding: '1.5rem',
+                  background: 'rgba(0,0,0,0.15)',
+                  borderRadius: 'var(--radius-md)',
+                  border: '1px solid var(--border-subtle)'
+                }}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
                   <strong style={{ color: 'var(--text-primary)' }}>{group.title}</strong>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-color)', fontFamily: 'var(--font-mono)' }}>{group.filename}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--accent-color)', fontFamily: 'var(--font-mono)' }}>
+                    {group.filename}
+                  </span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '1rem' }}>
@@ -482,7 +555,7 @@ export const AdminDashboard = () => {
         </div>
       )}
 
-      {/* TAB 4: FEATURED PROJECTS (FULL CRUD + CLEAR ALL) */}
+      {/* TAB 4: FEATURED PROJECTS */}
       {activeTab === 'projects' && (
         <div className="glass-card" style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -493,12 +566,7 @@ export const AdminDashboard = () => {
               <button
                 className="btn-pill"
                 style={{ color: '#ff5f56', borderColor: '#ff5f56' }}
-                onClick={() => {
-                  if (window.confirm('Are you sure you want to remove ALL project entries?')) {
-                    clearAllProjects();
-                    setProjects([]);
-                  }
-                }}
+                onClick={clearAllProjects}
               >
                 Remove All Projects
               </button>
@@ -561,7 +629,7 @@ export const AdminDashboard = () => {
             </div>
 
             <div className="form-group">
-              <label>Project Cover Image (Path, Link or File Upload)</label>
+              <label>Project Cover Image (Path, Link or Upload image)</label>
               <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
                 <input
                   type="text"

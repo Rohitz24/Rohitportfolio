@@ -1,14 +1,29 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { initialPortfolioData } from '../data/defaultData';
+import { initialPortfolioData, DATA_VERSION } from '../data/defaultData';
 
 const PortfolioContext = createContext();
 
 export const PortfolioProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  
   const [portfolioData, setPortfolioData] = useState(() => {
+    const savedVersion = localStorage.getItem('portfolioVersion');
     const saved = localStorage.getItem('portfolioData');
-    return saved ? JSON.parse(saved) : initialPortfolioData;
+
+    // If the deployed code version is newer, discard local cache and use the new code!
+    if (savedVersion !== DATA_VERSION || !saved) {
+      localStorage.setItem('portfolioVersion', DATA_VERSION);
+      localStorage.setItem('portfolioData', JSON.stringify(initialPortfolioData));
+      return initialPortfolioData;
+    }
+
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return initialPortfolioData;
+    }
   });
+
   const [isAuthenticated, setIsAuthenticated] = useState(
     () => sessionStorage.getItem('adminAuth') === 'true'
   );
@@ -51,19 +66,16 @@ export const PortfolioProvider = ({ children }) => {
     showToast('[LOGOUT]: Session terminated.');
   };
 
-  // Full-state updater for comprehensive dashboard control
   const updateEntirePortfolio = (newData) => {
     setPortfolioData(newData);
-    showToast('[SAVED]: Portfolio settings synchronized!');
+    showToast('[SAVED LOCALLY]: Saved in current browser session.');
   };
 
-  // Delete all projects action
-  const clearAllProjects = () => {
-    setPortfolioData((prev) => ({
-      ...prev,
-      projects: []
-    }));
-    showToast('[REMOVED]: All project entries cleared.');
+  const resetToCodeDefault = () => {
+    localStorage.removeItem('portfolioData');
+    localStorage.setItem('portfolioVersion', DATA_VERSION);
+    setPortfolioData(initialPortfolioData);
+    showToast('[RESET]: Synchronized with deployment code.');
   };
 
   return (
@@ -74,7 +86,7 @@ export const PortfolioProvider = ({ children }) => {
         portfolioData,
         setPortfolioData,
         updateEntirePortfolio,
-        clearAllProjects,
+        resetToCodeDefault,
         isAuthenticated,
         view,
         setView,
