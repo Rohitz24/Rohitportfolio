@@ -28,7 +28,7 @@ const MainContent = () => {
           <Contact />
           <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '2.5rem 0', textAlign: 'center' }}>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-tertiary)' }}>
-              &copy; {new Date().getFullYear()} Rohit Zade. All rights reserved. | Apple Minimal &amp; Retro Aesthetics.
+              &copy; {new Date().getFullYear()} Rohit Zade. All rights reserved.
             </p>
           </footer>
         </main>
